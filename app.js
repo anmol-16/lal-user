@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotEnv = require('dotenv');
 const {userRouter} = require('./routes/user.routes')
+const csrf = require('csurf')
 dotEnv.config();
 
 mongoose.connect( process.env.DB_URL,{ useNewUrlParser : true }).then(
@@ -15,6 +16,7 @@ mongoose.connect( process.env.DB_URL,{ useNewUrlParser : true }).then(
     }
 )
 
+const csrfProtection = csrf();
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended : true}));

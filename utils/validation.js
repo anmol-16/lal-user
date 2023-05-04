@@ -11,6 +11,17 @@ const validateUser = (userData) => {
     return schema.validate(userData);
 };
 
+const validateUpdateData = (userData) => {
+    const schema = Joi.object({
+        firstName: Joi.string(),
+        lastName: Joi.string(),
+        userName: Joi.string().min(8),
+        email: Joi.string().email(),
+        password: Joi.string().min(8),
+    });
+    return schema.validate(userData);
+}
+
 const validateLogin = (loginUserData) => {
     const schema = Joi.object({
         userName: Joi.string().required(),
@@ -21,5 +32,6 @@ const validateLogin = (loginUserData) => {
 
 module.exports = {
     validateUser,
-    validateLogin
+    validateLogin,
+    validateUpdateData
 }

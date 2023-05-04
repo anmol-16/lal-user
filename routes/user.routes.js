@@ -4,7 +4,7 @@ const {
     updateDetails,
     loginInUser
 } = require('../controller/user.controller');
-
+const {protectRoute} = require('../utils/auth-helper')
 const userRouter = express.Router();
 
 userRouter

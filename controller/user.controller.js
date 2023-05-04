@@ -1,14 +1,15 @@
-const { validateUser, validateLogin} = require('../utils/validation');
+const { validateUser, validateLogin, validateUpdateData} = require('../utils/validation');
 const UserSchema = require('../model/user.model');
-const {hashPass} = require('../utils/password')
-
+const {hashPass} = require('../utils/password');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const userSignUp = async (req, res) => {
 
     try {
         const {error, value} = validateUser(req.body);
         console.log(value,"value");
         if(error) {
-            return res.status(400).json({
+            return res.status(406).json({
                 msg:'Not valid data'
             })
         }
@@ -55,15 +56,25 @@ const loginInUser = async (req, res) => {
         }
         console.log(value,"value");
         const {userName, password} = req.body;
-        const userFound = await UserSchema.findOne({userName, password});
+
+        const userFound = await UserSchema.findOne({userName});
         if(userFound) {
+            const userPassword = userFound.password;
+            const uid = userFound['_id'];
+            console.log(uid,"userid");
+            let token = jwt.sign({payload:uid},process.env.JWT_KEY);
+            const isPasswordValid = await bcrypt.compare(password, userPassword);
+            if (!isPasswordValid) {
+              return res.status(401).json({ error: 'Invalid username or password' });
+            }
+            res.cookie('login',token,{httpOnly:true});
             res.status(200).json({
-                msg: "Login SuccessFull"
+                msg: "Login Successfully"
             });
         }
         else{
             res.status(401).json({
-                msg:"Invalid Creds"
+                msg:"Invalid username or password"
             });
         }
     } catch (error) {
@@ -77,7 +88,7 @@ const loginInUser = async (req, res) => {
 const updateDetails = async (req, res) => {
     try {
         const userUpdateId = req.params.id;
-        const {error, value} = validateUser(req.body);
+        const {error, value} = validateUpdateData(req.body);
         console.log(value,"value");
         if(error) {
             return res.status(400).json({
@@ -85,12 +96,13 @@ const updateDetails = async (req, res) => {
             })
         }
         const {firstName, lastName, userName, email, password} = value;
+        const hashedPassword = await hashPass(password);
         const updatedUser = await UserSchema.findByIdAndUpdate(userUpdateId,{
             firstName: firstName,
             lastName: lastName,
             email: email,
             userName:userName,
-            password:password
+            password:hashedPassword
         });
         res.status(200).json({
             data: updatedUser,
