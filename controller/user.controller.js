@@ -1,9 +1,9 @@
 const { validateUser, validateLogin} = require('../utils/validation');
 const UserSchema = require('../model/user.model');
-const bcrypt = require('bcryptjs');
+const {hashPass} = require('../utils/password')
 
 const userSignUp = async (req, res) => {
-    
+
     try {
         const {error, value} = validateUser(req.body);
         console.log(value,"value");
@@ -13,6 +13,7 @@ const userSignUp = async (req, res) => {
             })
         }
         const {firstName, lastName, userName, email, password} = value;
+        const hashedPassword = await hashPass(password);
         const emailExist = await UserSchema.findOne({email:email});
         console.log(emailExist,"email exists");
         console.log("here");
@@ -28,7 +29,7 @@ const userSignUp = async (req, res) => {
             lastName: lastName,
             email: email,
             userName:userName,
-            password:password
+            password:hashedPassword
         });
         const savedUser = await newUser.save();
         console.log("New User registered successfully");
@@ -75,8 +76,15 @@ const loginInUser = async (req, res) => {
 
 const updateDetails = async (req, res) => {
     try {
-        const {firstName, lastName, userName, email, password} = req.body;
         const userUpdateId = req.params.id;
+        const {error, value} = validateUser(req.body);
+        console.log(value,"value");
+        if(error) {
+            return res.status(400).json({
+                msg:'Not valid data'
+            })
+        }
+        const {firstName, lastName, userName, email, password} = value;
         const updatedUser = await UserSchema.findByIdAndUpdate(userUpdateId,{
             firstName: firstName,
             lastName: lastName,
